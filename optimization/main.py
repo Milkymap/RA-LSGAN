@@ -22,7 +22,8 @@ from os import path, mkdir
 @click.option('-e', '--nb_epochs', help='number of epochs', type=int)
 @click.option('-b', '--bt_size', help='batch size', type=int)
 @click.option('-s', '--storage', help='image sampler storage', type=click.Path(False))
-def main_loop(data_path, nb_epochs, bt_size, storage):
+@click.option('--show/--no-show', help='show or store sample image', default=True)
+def main_loop(data_path, nb_epochs, bt_size, storage, show):
 	device = th.device('cuda:0' if th.cuda.is_available() else 'cpu')
 	if not path.isdir(storage):
 		mkdir(storage)
@@ -88,10 +89,12 @@ def main_loop(data_path, nb_epochs, bt_size, storage):
 			if index % 2 == 0:
 				sample_image = to_grid(th.cat((fake_image.cpu(), real_image.cpu()), dim=-1), nb_rows=2)
 				cv_version = th2cv(sample_image)
-				rescaled_version = cv_version
-				cv2.imshow('sample', rescaled_version) 
-				cv2.waitKey(10)
-
+				rescaled_version = cv_version * 255
+				if show:
+					cv2.imshow('sample', cv_version) 
+					cv2.waitKey(10)
+				else:
+					cv2.imwrite(f'%s/img_%03d_%03d.jpg' % (storage, epoch_counter, index), rescaled_version)
 		# end current epoch
 	# end training loop 
 
